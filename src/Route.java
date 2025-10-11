@@ -5,16 +5,15 @@ import java.util.Locale;
 
 public class Route {
 
-    private final String routeID;
-    private final LocalTime departureTime;
-    private final LocalTime arrivalTime;
-    private final String departureCity;
-    private final String arrivalCity;
-    private final String trainType;
-    private final float firstClassTicket;
-    private final float secondClassTicket;
-    // Days like: "Mon", "Tue", "Wednesday", etc.
-    private final ArrayList<String> daysOfOperation;
+    private String routeID;
+    private LocalTime departureTime;
+    private LocalTime arrivalTime;
+    private String departureCity;
+    private String arrivalCity;
+    private String trainType;
+    private float firstClassTicket;
+    private float secondClassTicket;
+    private ArrayList<String> daysOfOperation;
 
     public Route(String routeID,
                  LocalTime departureTime,
@@ -36,38 +35,37 @@ public class Route {
         this.daysOfOperation = daysOfOperation;
     }
 
-    /** Duration in minutes, accounting for overnight arrival. */
-    public long durationMinutes() {
-        long mins = ChronoUnit.MINUTES.between(departureTime, arrivalTime);
-        if (mins < 0) mins += 24 * 60; // next-day arrival
-        return mins;
-    }
 
-    /** Case-insensitive prefix match: "Mon" matches "Monday", etc. */
-    public boolean inOperation(String day) {
-        if (day == null) return true;
-        String norm = day.toLowerCase(Locale.ROOT).trim();
-        for (String d : daysOfOperation) {
-            if (d != null && d.toLowerCase(Locale.ROOT).trim().startsWith(norm)) return true;
-        }
-        return false;
-    }
+public LocalTime duration() {
+    long mins = ChronoUnit.MINUTES.between(departureTime, arrivalTime);
+    if (mins < 0) mins += 24 * 60; // overnight arrival
+    return LocalTime.of((int)(mins / 60), (int)(mins % 60));
+}
 
-    public String getRouteID() { return routeID; }
-    public LocalTime getDepartureTime() { return departureTime; }
-    public LocalTime getArrivalTime() { return arrivalTime; }
-    public String getDepartureCity() { return departureCity; }
-    public String getArrivalCity() { return arrivalCity; }
-    public String getTrainType() { return trainType; }
-    public float getFirstClassTicket() { return firstClassTicket; }
-    public float getSecondClassTicket() { return secondClassTicket; }
-    public ArrayList<String> getDaysOfOperation() { return daysOfOperation; }
 
-    @Override
-    public String toString() {
-        return String.format(
-                "Route %s: %s (%s) -> %s (%s) type=%s first=%.2f€ second=%.2f€ days=%s",
-                routeID, departureCity, departureTime, arrivalCity, arrivalTime, trainType,
-                firstClassTicket, secondClassTicket, daysOfOperation);
+public boolean InOperation(String day) {
+    if (day == null) return true;
+    String norm = day.toLowerCase(Locale.ROOT).trim();
+    for (String d : daysOfOperation) {
+        if (d != null && d.toLowerCase(Locale.ROOT).trim().startsWith(norm)) return true;
     }
+    return false;
+}
+
+// Getters (needed by other classes)
+public String getRouteID() { return routeID; }
+public LocalTime getDepartureTime() { return departureTime; }
+public LocalTime getArrivalTime() { return arrivalTime; }
+public String getDepartureCity() { return departureCity; }
+public String getArrivalCity() { return arrivalCity; }
+public String getTrainType() { return trainType; }
+public float getFirstClassTicket() { return firstClassTicket; }
+public float getSecondClassTicket() { return secondClassTicket; }
+public ArrayList<String> getDaysOfOperation() { return daysOfOperation; }
+
+@Override
+public String toString() {
+    return String.format("%s %s (%s)->%s (%s)",
+            trainType, routeID, departureCity, arrivalCity, arrivalTime);
+}
 }

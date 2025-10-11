@@ -1,50 +1,66 @@
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 public class Connection {
 
-    private final ArrayList<Route> routesCon;
+    private final ArrayList<Route> connection;
 
     public Connection(ArrayList<Route> routes) {
-        this.routesCon = new ArrayList<>(routes);
+        this.connection = new ArrayList<>(routes);
     }
 
-    public ArrayList<Route> getRoutesCon() { return routesCon; }
+    public ArrayList<Route> getLegs() { return connection; }
 
-    // duration of ride + wait
-    public long totalDurationMinutes(int transferBufferMinutes){
-        if (routesCon.isEmpty()) return 0;
-        long total = 0;
-        for (int i = 0; i< routesCon.size(); i++) {
-            Route r = routesCon.get(i);
-            total += r.durationMinutes();
-            if (i < routesCon.size() - 1) {
-                Route next = routesCon.get(i+1);
-                long waitTime = ChronoUnit.MINUTES.between(r.getArrivalTime(), next.getDepartureTime());
-                if (waitTime < 0) waitTime += 24*60;
-                total += transferBufferMinutes + Math.max(0, waitTime);
-            }
+
+public LocalTime totalDuration() {
+    if (connection.isEmpty()) return LocalTime.of(0,0);
+
+    long minutes = 0;
+    for (int i = 0; i < connection.size(); i++) {
+        Route r = connection.get(i);
+
+        long ride = ChronoUnit.MINUTES.between(r.getDepartureTime(), r.getArrivalTime());
+        if (ride < 0) ride += 24 * 60;
+        minutes += ride;
+
+
+        if (i < connection.size() - 1) {
+            Route next = connection.get(i + 1);
+            long wait = ChronoUnit.MINUTES.between(r.getArrivalTime(), next.getDepartureTime());
+            if (wait < 0) wait += 24 * 60;
+            minutes += wait;
         }
-        return total;
     }
-    // total cost either first or second. no mixing
-    public float totalCost(boolean firstClass){
-        float sum = 0f;
-        for (Route r : routesCon) sum += firstClass ? r.getFirstClassTicket() : r.getSecondClassTicket();
-        return sum;
-    }
+    return LocalTime.of((int)(minutes / 60), (int)(minutes % 60));
+}
 
-    //display info to user regarding this connection
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i< routesCon.size(); i++) {
-            Route r = routesCon.get(i);
-            sb.append(String.format("%s %s %s to %s %s-%s",
-                    r.getTrainType(), r.getRouteID(), r.getDepartureCity(), r.getArrivalCity(),
-                    r.getDepartureTime(), r.getArrivalTime()));
-            if (i < routesCon.size()-1) sb.append(" | ");
-        }
-        return sb.toString();
+
+public float totalCost() {
+    float sum = 0f;
+    for (Route r : connection) sum += r.getSecondClassTicket();
+    return sum;
+}
+
+// Optional helper if you want first-class totals in Main (doesn’t violate diagram)
+public float totalCost(boolean firstClass) {
+    if (!firstClass) return totalCost();
+    float sum = 0f;
+    for (Route r : connection) sum += r.getFirstClassTicket();
+    return sum;
+}
+
+@Override
+public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (int i=0;i<connection.size();i++) {
+        Route r = connection.get(i);
+        sb.append(String.format("%s %s %s-%s %s→%s",
+                r.getTrainType(), r.getRouteID(),
+                r.getDepartureCity(), r.getArrivalCity(),
+                r.getDepartureTime(), r.getArrivalTime()));
+        if (i < connection.size()-1) sb.append(" | ");
     }
+    return sb.toString();
+}
 }
