@@ -1,19 +1,25 @@
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class ConnectionCatalogue {
-    private static ConnectionCatalogue instance;
-    private ArrayList<Connection> routes;
 
-    private ConnectionCatalogue() {
-    }
+    private static final int TRANSFER_BUFFER_MIN = 10;
+
+    private static ConnectionCatalogue instance;
+    private final ArrayList<Connection> connections;
+    //singleton design pattern private constr.
+    private ConnectionCatalogue() { connections = new ArrayList<>(); }
+
     public static ConnectionCatalogue getInstance() {
-        if(instance == null) {
-            instance = new ConnectionCatalogue();
-        }
+        if(instance == null) instance = new ConnectionCatalogue();
         return instance;
     }
+
     public Connection create(ArrayList<Route> routes){
         Connection connection = new Connection(routes);
-        return null;
+        connections.add(connection);
+        return connection;
     }
+    public ArrayList<Connection> getConnections() { return connections; }
+
 }
