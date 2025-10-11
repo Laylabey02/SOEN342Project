@@ -3,7 +3,6 @@ import java.util.Comparator;
 
 public class ConnectionCatalogue {
 
-    private static final int TRANSFER_BUFFER_MIN = 10;
 
     private static ConnectionCatalogue instance;
     private final ArrayList<Connection> connections;
