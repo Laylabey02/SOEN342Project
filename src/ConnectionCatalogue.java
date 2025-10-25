@@ -25,12 +25,12 @@ public class ConnectionCatalogue {
 
     public void clear() { connections.clear(); }
 
-    // build connection of 1,2,3 size routes
+    //build connection of 1,2,3 size routes
     public ArrayList<Connection> compute(RouteCatalogue rc, String from, String to, String day) {
         clear();
         ArrayList<Route> rs = rc.getRoutes();
 
-        // direct
+        //direct
         for (Route r : rs) {
             if (r.getDepartureCity().equalsIgnoreCase(from)
                     && r.getArrivalCity().equalsIgnoreCase(to)
@@ -41,7 +41,7 @@ public class ConnectionCatalogue {
             }
         }
 
-        // 1 stop: A->X, X->B
+        //1 stop
         for (Route r1 : rs) {
             if (!(r1.getDepartureCity().equalsIgnoreCase(from) && r1.InOperation(day))) continue;
             for (Route r2 : rs) {
@@ -54,7 +54,7 @@ public class ConnectionCatalogue {
             }
         }
 
-        // 2 stops: A->X, X->Y, Y->B
+        //2 stops
         for (Route r1 : rs) {
             if (!(r1.getDepartureCity().equalsIgnoreCase(from) && r1.InOperation(day))) continue;
             for (Route r2 : rs) {
@@ -78,7 +78,7 @@ public class ConnectionCatalogue {
     public ArrayList<Connection> sort(ArrayList<Connection> list, String key, boolean firstClass) {
         ArrayList<Connection> out = new ArrayList<>(list);
         if ("duration".equalsIgnoreCase(key)) {
-            out.sort(Comparator.comparing(Connection::totalDuration)); // compares by LocalTime
+            out.sort(Comparator.comparing(Connection::totalDuration));
         } else {
             out.sort(Comparator.comparingDouble(c -> c.totalCost(firstClass)));
         }

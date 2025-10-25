@@ -10,7 +10,7 @@ public class Connection {
         this.connection = new ArrayList<>(routes);
     }
 
-    public ArrayList<Route> getLegs() { return connection; }
+    public ArrayList<Route> getConnection() { return connection; }
 
 
 public LocalTime totalDuration() {
@@ -24,7 +24,6 @@ public LocalTime totalDuration() {
         if (ride < 0) ride += 24 * 60;
         minutes += ride;
 
-
         if (i < connection.size() - 1) {
             Route next = connection.get(i + 1);
             long wait = ChronoUnit.MINUTES.between(r.getArrivalTime(), next.getDepartureTime());
@@ -32,7 +31,17 @@ public LocalTime totalDuration() {
             minutes += wait;
         }
     }
-    return LocalTime.of((int)(minutes / 60), (int)(minutes % 60));
+    
+    //Handle cases where total duration exceeds 24 hours
+    int hours = (int)(minutes / 60);
+    int mins = (int)(minutes % 60);
+    
+
+    if (hours >= 24) {
+        return LocalTime.of(hours % 24, mins);
+    }
+    
+    return LocalTime.of(hours, mins);
 }
 
 
@@ -42,7 +51,7 @@ public float totalCost() {
     return sum;
 }
 
-// Optional helper if you want first-class totals in Main (doesn’t violate diagram)
+//To be fixed
 public float totalCost(boolean firstClass) {
     if (!firstClass) return totalCost();
     float sum = 0f;
