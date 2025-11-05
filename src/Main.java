@@ -3,6 +3,9 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        DataBaseTableInitializer.initializeDatabase();
+        System.out.println("Setup complete. You can now use the database!");
+
         RouteCatalogue routeCatalogue = RouteCatalogue.getInstance();
         ConnectionCatalogue connectionCatalogue = ConnectionCatalogue.getInstance();
         TripCatalogue tripCatalogue = TripCatalogue.getInstance();

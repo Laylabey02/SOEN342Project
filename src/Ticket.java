@@ -31,3 +31,6 @@ public class Ticket {
                            isFirstClass ? "First" : "Second", price);
     }
 }
+
+
+
