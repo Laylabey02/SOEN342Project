@@ -53,8 +53,8 @@ public final class RouteGateway {
             ps.setString(4, departureCity);
             ps.setString(5, arrivalCity);
             ps.setString(6, trainType);
-            ps.setDouble(7, firstClassTicket);
-            ps.setDouble(8, secondClassTicket);
+            ps.setDouble(7, (double) firstClassTicket);
+            ps.setDouble(8, (double) secondClassTicket);
             ps.setString(9, String.join(",", daysOfOperation));
             ps.executeUpdate();
         } catch (SQLException e) {
