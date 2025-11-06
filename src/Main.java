@@ -6,16 +6,16 @@ public class Main {
         DataBaseTableInitializer.initializeDatabase();
         System.out.println("Setup complete. You can now use the database!");
 
-        RouteCatalogue routeCatalogue = RouteCatalogue.getInstance();
+        RouteGateway routeGateway = RouteGateway.getInstance();
         ConnectionCatalogue connectionCatalogue = ConnectionCatalogue.getInstance();
-        TripCatalogue tripCatalogue = TripCatalogue.getInstance();
-        ClientCatalogue clientCatalogue = ClientCatalogue.getInstance();
+        TripGateway tripGateway = TripGateway.getInstance();
+        ClientGateway clientGateway = ClientGateway.getInstance();
         Scanner sc = new Scanner(System.in);
 
         //load CSV
         String csvPath = "eu_rail_network.csv";
         try {
-            routeCatalogue.loadFromCsv(csvPath);
+            routeGateway.loadFromCsv(csvPath);
         } catch (Exception e) {
             System.out.println("Failed to load CSV: " + e.getMessage());
             return;
@@ -39,7 +39,7 @@ public class Main {
             boolean firstClass = sc.nextLine().trim().toLowerCase().startsWith("f");
 
             //show possible connections
-            ArrayList<Connection> results = connectionCatalogue.compute(routeCatalogue, from, to, day);
+            ArrayList<Connection> results = connectionCatalogue.compute(routeGateway, from, to, day);
             if (results.isEmpty()) {
                 System.out.println("\nNo connections found for the given inputs.");
                 System.out.println("Would you like to search again? (yes/no):");
@@ -138,15 +138,17 @@ public class Main {
             }
             
             // create client
-            String fullName = clientFirstName + " " + clientLastName;
-            Client client = clientCatalogue.findClient(clientId);
+            //I changed this part to match the client gateway
+
+            Client client = clientGateway.findByIdentification(clientId);
             if (client == null) {
-                client = clientCatalogue.create(fullName, 0, clientId);
                 client = new Client(clientLastName, clientFirstName, clientId);
+                clientGateway.insert(client);
             }
-            
+
+
             // create trip
-            Trip trip = tripCatalogue.createTrip(clientLastName, clientId, selectedConnections,
+            Trip trip = tripGateway.createTrip(clientLastName, clientId, selectedConnections,
                                                 travelerNames, ages, identificationNumbers, firstClass);
             
             //add trip to client's history
@@ -161,7 +163,7 @@ public class Main {
             
             if (viewHistory.startsWith("y")) {
                 System.out.println("\n=== TRIP HISTORY ===");
-                ArrayList<Trip> clientTrips = tripCatalogue.getTripsByClient(clientLastName, clientId);
+                ArrayList<Trip> clientTrips = tripGateway.getTripsByClient(clientLastName, clientId);
                 if (clientTrips.isEmpty()) {
                     System.out.println("No trips found for this client.");
                 } else {

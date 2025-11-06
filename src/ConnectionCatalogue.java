@@ -26,7 +26,7 @@ public class ConnectionCatalogue {
     public void clear() { connections.clear(); }
 
     //build connection of 1,2,3 size routes
-    public ArrayList<Connection> compute(RouteCatalogue rc, String from, String to, String day) {
+    public ArrayList<Connection> compute(RouteGateway rc, String from, String to, String day) {
         clear();
         ArrayList<Route> rs = rc.getRoutes();
 
