@@ -18,39 +18,35 @@ public class DataBaseTableInitializer {
         }
     }
 
-    //Returns a Connection object used to send SQL commands to the database.
     private static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL);
     }
 
-    //Forces SQLite to enforce relationships declared in FOREIGN KEY clauses
     private static void enableForeignKeys(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
             stmt.execute("PRAGMA foreign_keys = ON;");
         }
     }
 
-    //Create tables
     private static void createTables(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
 
-            // Client table
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS Client (
-                    clientID      INTEGER PRIMARY KEY,
-                    name          TEXT NOT NULL,
-                    age           INTEGER
+                    identificationNumber TEXT PRIMARY KEY,
+                    firstName            TEXT NOT NULL,
+                    lastName             TEXT NOT NULL
                 );
             """);
 
-            // Route table
+
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS Route (
-                    routeID           INTEGER PRIMARY KEY,
+                    routeID           TEXT PRIMARY KEY,
                     departureTime     TEXT,
                     arrivalTime       TEXT,
-                    arrivalCity       TEXT,
                     departureCity     TEXT,
+                    arrivalCity       TEXT,
                     trainType         TEXT,
                     firstClassTicket  REAL,
                     secondClassTicket REAL,
@@ -58,44 +54,38 @@ public class DataBaseTableInitializer {
                 );
             """);
 
-            // Trip table
+
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS Trip (
-                    tripID   INTEGER PRIMARY KEY,
-                    clientID INTEGER NOT NULL,
-                    routeID  INTEGER NOT NULL,
-                    connection TEXT,
-                    FOREIGN KEY (clientID) REFERENCES Client(clientID),
-                    FOREIGN KEY (routeID)  REFERENCES Route(routeID)
+                    tripId      TEXT PRIMARY KEY,
+                    clientId    TEXT NOT NULL,
+                    bookingDate TEXT,
+                    isCompleted INTEGER,
+                    connection  TEXT,
+                    FOREIGN KEY (clientId) REFERENCES Client(identificationNumber)
                 );
             """);
 
-            // Reservation table
+
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS Reservation (
-                    reservationID INTEGER PRIMARY KEY,
-                    tripID        INTEGER NOT NULL,
-                    FOREIGN KEY (tripID) REFERENCES Trip(tripID)
+                    reservationId TEXT PRIMARY KEY,
+                    tripId        TEXT NOT NULL,
+                    FOREIGN KEY (tripId) REFERENCES Trip(tripId)
                 );
             """);
 
-            // Ticket table
+
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS Ticket (
-                    ticketID      INTEGER PRIMARY KEY,
-                    clientID      INTEGER NOT NULL,
-                    reservationID INTEGER NOT NULL,
-                    FOREIGN KEY (clientID)      REFERENCES Client(clientID),
-                    FOREIGN KEY (reservationID) REFERENCES Reservation(reservationID)
-                );
-            """);
-
-            // Connection
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS Connection (
-                    connectionID INTEGER PRIMARY KEY,
-                    tripID       INTEGER NOT NULL,
-                    FOREIGN KEY (tripID) REFERENCES Trip(tripID)
+                    ticketNumber         TEXT PRIMARY KEY,
+                    reservationId        TEXT NOT NULL,
+                    travelerName         TEXT,
+                    age                  INTEGER,
+                    identificationNumber TEXT,
+                    isFirstClass         INTEGER,
+                    price                REAL,
+                    FOREIGN KEY (reservationId) REFERENCES Reservation(reservationId)
                 );
             """);
         }

@@ -1,5 +1,5 @@
 Ticket.class
-ClientCatalogue.class
+ClientGateway.class
 Main.class
 Reservation.class
 Route.class
