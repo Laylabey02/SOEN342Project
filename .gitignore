@@ -5,6 +5,9 @@ out/
 
 .idea/
 *.iml
+/target
+###not to push records on github###
+mydatabase.db
 ### Eclipse ###
 .apt_generated
 .classpath

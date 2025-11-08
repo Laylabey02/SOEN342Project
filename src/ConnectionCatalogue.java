@@ -1,3 +1,4 @@
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -5,6 +6,7 @@ public class ConnectionCatalogue {
 
     private static ConnectionCatalogue instance;
     private final ArrayList<Connection> connections;
+    private static final long MAX_LAYOVER_MINUTES = 180; // 3 hours
 
     private ConnectionCatalogue() {
         this.connections = new ArrayList<>();
@@ -19,6 +21,23 @@ public class ConnectionCatalogue {
         Connection c = new Connection(routes);
         connections.add(c);
         return c;
+    }
+
+    private boolean isValidLayover(ArrayList<Route> routes) {
+        if (routes.size() <= 1) return true; // Direct connections have no layovers
+        
+        for (int i = 0; i < routes.size() - 1; i++) {
+            Route current = routes.get(i);
+            Route next = routes.get(i + 1);
+            
+            long layoverMinutes = ChronoUnit.MINUTES.between(current.getArrivalTime(), next.getDepartureTime());
+            if (layoverMinutes < 0) layoverMinutes += 24 * 60; // Handle overnight cases
+            
+            if (layoverMinutes > MAX_LAYOVER_MINUTES) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public ArrayList<Connection> getConnections() { return connections; }
@@ -50,7 +69,9 @@ public class ConnectionCatalogue {
 
                 ArrayList<Route> l = new ArrayList<>();
                 l.add(r1); l.add(r2);
-                create(l);
+                if (isValidLayover(l)) {
+                    create(l);
+                }
             }
         }
 
@@ -67,7 +88,9 @@ public class ConnectionCatalogue {
 
                     ArrayList<Route> l = new ArrayList<>();
                     l.add(r1); l.add(r2); l.add(r3);
-                    create(l);
+                    if (isValidLayover(l)) {
+                        create(l);
+                    }
                 }
             }
         }
