@@ -35,6 +35,9 @@ Data persistence is implemented using an **SQLite database**.
 - **IDE:** IntelliJ IDEA / VS Code  
 - **Version Control:** GitHub  
 
+#### Extra Important Note for grading:
+- We pushed all our artifacts for each iteration by the due date in the form of issues. If you check our "closed issues" section, you will be able to see that we pushed all diagrams iteration by iteration. Since Christopher gave us a feedback that no artifacts were done, we decided to group the diagrams in folders and we pushed it onto github. If you see that the date is 11-14. It is not. The diagrams were done and pushed in issues by the due dates! We simply grouped them in folders and commited that onto github. 
+
 ---
 
 ## How to Run
