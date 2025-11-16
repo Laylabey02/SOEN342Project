@@ -1,0 +1,4 @@
+We realized later that we forgot to add the updated class diagram and the operation contract
+for the policy requirement, we updated the connection catalogue and added
+isValidLayover(ArrayList <Routes> routes) method in the class diagram.
+And we updated the searchForConnection() contract and we included the policy rule.
