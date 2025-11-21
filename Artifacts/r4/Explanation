@@ -1,0 +1,4 @@
+We updated the SD and SSD diagrams for searchForConnections(). For iteration 1 we were unsure of what documents
+should have been submitted and the instructions were superficial and unclear.
+
+We updated the SD for "Book a trip". We had to refactor the parameters for the book method in "main". 
