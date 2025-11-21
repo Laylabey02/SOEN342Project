@@ -17,7 +17,6 @@ public class Reservation {
         this.ticket = ticket;
         this.routes = new ArrayList<>(routes);
     }
-    
 
     public String getReservationId() { return reservationId; }
     public String getTravelerName() { return travelerName; }

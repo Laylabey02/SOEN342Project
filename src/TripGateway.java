@@ -2,6 +2,7 @@ import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TripGateway {
     private static final String DB_URL = "jdbc:sqlite:mydatabase.db";
@@ -15,18 +16,20 @@ public class TripGateway {
         return instance;
     }
 
-    // ---- ID generators (keep behavior consistent with your old code) ----
-    public String generateTripId() {
+     public String generateTripId() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder tripId = new StringBuilder();
         for (int i = 0; i < 8; i++) tripId.append(chars.charAt(random.nextInt(chars.length())));
         return tripId.toString();
     }
+    //good for unique number generation. 
+    private static final AtomicLong counter = new AtomicLong();
+
     public String generateTicketNumber() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder ticketNumber = new StringBuilder();
-        for (int i = 0; i < 10; i++) ticketNumber.append(chars.charAt(random.nextInt(chars.length())));
-        return ticketNumber.toString();
+        long timestamp = System.currentTimeMillis(); // 13 digits
+        long count = counter.getAndIncrement() % 1000; // 3 digits rollover
+
+        return timestamp + String.format("%03d", count);
     }
     public String generateReservationId() {
         return "RES" + String.format("%06d", random.nextInt(1_000_000));

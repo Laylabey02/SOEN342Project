@@ -26,7 +26,7 @@ public class ClientGateway {
         }
     }
 
-    public Client findByIdentification(String identificationNumber) {
+    public Client findClient(String identificationNumber) {
         String sql = "SELECT identificationNumber, firstName, lastName FROM Client WHERE identificationNumber = ?";
         try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -63,5 +63,14 @@ public class ClientGateway {
             System.out.println("Client getAll failed: " + e.getMessage());
         }
         return out;
+    }
+
+//Id unique by name
+    public boolean hasDifferentName(String identificationNumber, String firstName, String lastName) {
+        Client existing = findClient(identificationNumber);
+        if (existing != null) {
+            return !existing.getFirstName().equals(firstName) || !existing.getLastName().equals(lastName);
+        }
+        return false;
     }
 }

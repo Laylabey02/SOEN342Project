@@ -1,3 +1,5 @@
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,10 +46,65 @@ public class ConnectionCatalogue {
 
     public void clear() { connections.clear(); }
 
+    private boolean matchesFilters(Connection c, String arrivalTimeStr, String departureTimeStr, 
+                                   String ticketCostStr, String trainType, boolean firstClass) {
+        ArrayList<Route> routes = c.getConnection();
+        if (routes.isEmpty()) return false;
+        
+        // Check departure time (first route's departure time)
+        if (departureTimeStr != null && !departureTimeStr.isEmpty()) {
+            try {
+                LocalTime filterDepartureTime = LocalTime.parse(departureTimeStr);
+                LocalTime connectionDepartureTime = routes.get(0).getDepartureTime();
+                if (!connectionDepartureTime.equals(filterDepartureTime)) {
+                    return false;
+                }
+            } catch (DateTimeParseException e) {
+            }
+        }
+        
+        // Check arrival time (last route's arrival time)
+        if (arrivalTimeStr != null && !arrivalTimeStr.isEmpty()) {
+            try {
+                LocalTime filterArrivalTime = LocalTime.parse(arrivalTimeStr);
+                LocalTime connectionArrivalTime = routes.get(routes.size() - 1).getArrivalTime();
+                if (!connectionArrivalTime.equals(filterArrivalTime)) {
+                    return false;
+                }
+            } catch (DateTimeParseException e) {
+            }
+        }
+
+        if (trainType != null && !trainType.isEmpty()) {
+            for (Route r : routes) {
+                if (!r.getTrainType().equalsIgnoreCase(trainType)) {
+                    return false;
+                }
+            }
+        }
+        
+        // Check ticket cost (total cost must be less than or equal to specified)
+        if (ticketCostStr != null && !ticketCostStr.isEmpty()) {
+            try {
+                float maxCost = Float.parseFloat(ticketCostStr);
+                float connectionCost = c.totalCost(firstClass);
+                if (connectionCost > maxCost) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
+        
+        return true;
+    }
+
     //build connection of 1,2,3 size routes
-    public ArrayList<Connection> compute(RouteGateway rc, String from, String to, String day) {
+    public ArrayList<Connection> searchForConnections(RouteGateway rg, String from, String to, String day,
+                                         String arrivalTime, String departureTime, 
+                                         String ticketCost, String trainType, boolean firstClass) {
         clear();
-        ArrayList<Route> rs = rc.getRoutes();
+        ArrayList<Route> rs = rg.getRoutes();
+        ArrayList<Connection> allConnections = new ArrayList<>();
 
         //direct
         for (Route r : rs) {
@@ -56,7 +113,7 @@ public class ConnectionCatalogue {
                     && r.InOperation(day)) {
                 ArrayList<Route> l = new ArrayList<>();
                 l.add(r);
-                create(l);
+                allConnections.add(create(l));
             }
         }
 
@@ -70,7 +127,7 @@ public class ConnectionCatalogue {
                 ArrayList<Route> l = new ArrayList<>();
                 l.add(r1); l.add(r2);
                 if (isValidLayover(l)) {
-                    create(l);
+                    allConnections.add(create(l));
                 }
             }
         }
@@ -89,9 +146,15 @@ public class ConnectionCatalogue {
                     ArrayList<Route> l = new ArrayList<>();
                     l.add(r1); l.add(r2); l.add(r3);
                     if (isValidLayover(l)) {
-                        create(l);
+                        allConnections.add(create(l));
                     }
                 }
+            }
+        }
+        connections.clear();
+        for (Connection c : allConnections) {
+            if (matchesFilters(c, arrivalTime, departureTime, ticketCost, trainType, firstClass)) {
+                connections.add(c);
             }
         }
 
