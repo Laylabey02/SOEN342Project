@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Random;
@@ -52,7 +54,7 @@ public class TripGateway {
         // Insert Trip row first
         String tripSql = "INSERT INTO Trip (tripId, clientId, bookingDate, isCompleted, connection) VALUES (?, ?, ?, ?, ?)";
         try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(tripSql)) {
+            PreparedStatement ps = conn.prepareStatement(tripSql)) {
             ps.setString(1, tripId);
             ps.setString(2, clientId);
             ps.setString(3, trip.getBookingDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -104,7 +106,7 @@ public class TripGateway {
     private void insertReservation(String reservationId, String tripId) {
         String sql = "INSERT INTO Reservation (reservationId, tripId) VALUES (?, ?)";
         try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, reservationId);
             ps.setString(2, tripId);
             ps.executeUpdate();
@@ -119,7 +121,7 @@ public class TripGateway {
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
         try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ticket.getTicketNumber());
             ps.setString(2, reservationId);
             ps.setString(3, ticket.getTravelerName());
@@ -133,21 +135,23 @@ public class TripGateway {
         }
     }
 
-    // ------- Useful reads (optional for now) -------
+
     public ArrayList<Trip> getTripsByClient(String clientLastName, String identificationNumber) {
         ArrayList<Trip> out = new ArrayList<>();
         String sql = "SELECT tripId, clientId, bookingDate, isCompleted, connection FROM Trip WHERE clientId = ?";
         try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificationNumber);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Trip t = new Trip(
-                            rs.getString("tripId"),
-                            clientLastName,                        // we don’t normalize the last name in DB; you already have it at runtime
-                            rs.getString("clientId")
-                    );
-                    // (Optional) you could parse bookingDate/isCompleted/connection back here if needed
+                    String tripId = rs.getString("tripId");
+                    Trip t = new Trip(tripId, clientLastName, rs.getString("clientId"));
+
+                    String connectionStr = rs.getString("connection");
+                    ArrayList<Route> routes = loadRoutesFromConnection(connectionStr);
+
+                    loadReservationsForTrip(t, routes);
+                    
                     out.add(t);
                 }
             }
@@ -155,5 +159,120 @@ public class TripGateway {
             System.out.println("getTripsByClient failed: " + e.getMessage());
         }
         return out;
+    }
+    
+    private void loadReservationsForTrip(Trip trip, ArrayList<Route> routes) {
+        String sql = "SELECT reservationId FROM Reservation WHERE tripId = ?";
+        try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, trip.getTripId());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String reservationId = rs.getString("reservationId");
+
+                    Ticket ticket = loadTicket(reservationId);
+                    if (ticket == null) continue;
+                    
+                    // Create reservation with ticket and shared routes
+                    Reservation reservation = new Reservation(
+                            reservationId,
+                            ticket.getTravelerName(),
+                            ticket.getAge(),
+                            ticket.getIdentificationNumber(),
+                            ticket,
+                            routes  
+                    );
+                    
+                    trip.addReservation(reservation);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("loadReservationsForTrip failed: " + e.getMessage());
+        }
+    }
+    
+    private Ticket loadTicket(String reservationId) {
+        String sql = "SELECT ticketNumber, travelerName, age, identificationNumber, isFirstClass, price FROM Ticket WHERE reservationId = ?";
+        try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reservationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Ticket(
+                            rs.getString("ticketNumber"),
+                            rs.getString("travelerName"),
+                            rs.getInt("age"),
+                            rs.getString("identificationNumber"),
+                            rs.getInt("isFirstClass") == 1,
+                            rs.getFloat("price")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("loadTicket failed: " + e.getMessage());
+        }
+        return null;
+    }
+    
+
+    private ArrayList<Route> loadRoutesFromConnection(String connectionStr) {
+        ArrayList<Route> routes = new ArrayList<>();
+        if (connectionStr == null || connectionStr.isEmpty()) {
+            return routes;
+        }
+        
+        String[] routeIDs = connectionStr.split("\\|");
+        for (String routeID : routeIDs) {
+            Route route = loadRouteById(routeID.trim());
+            if (route != null) {
+                routes.add(route);
+            }
+        }
+        return routes;
+    }
+
+    private Route loadRouteById(String routeID) {
+        String sql = "SELECT routeID, departureTime, arrivalTime, departureCity, arrivalCity, trainType, firstClassTicket, secondClassTicket, daysOfOperation FROM Route WHERE routeID = ?";
+        try (java.sql.Connection conn = DriverManager.getConnection(DB_URL);
+            PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, routeID);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    LocalTime departureTime = LocalTime.parse(rs.getString("departureTime"));
+                    LocalTime arrivalTime = LocalTime.parse(rs.getString("arrivalTime"));
+                    String departureCity = rs.getString("departureCity");
+                    String arrivalCity = rs.getString("arrivalCity");
+                    String trainType = rs.getString("trainType");
+                    float firstClassTicket = (float) rs.getDouble("firstClassTicket");
+                    float secondClassTicket = (float) rs.getDouble("secondClassTicket");
+
+                    String daysStr = rs.getString("daysOfOperation");
+                    ArrayList<String> daysOfOperation = new ArrayList<>();
+                    if (daysStr != null && !daysStr.isEmpty()) {
+                        String[] days = daysStr.split(",");
+                        for (String day : days) {
+                            daysOfOperation.add(day.trim());
+                        }
+                    }
+                    
+                    return new Route(
+                            routeID,
+                            departureTime,
+                            arrivalTime,
+                            departureCity,
+                            arrivalCity,
+                            trainType,
+                            firstClassTicket,
+                            secondClassTicket,
+                            daysOfOperation
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("loadRouteById failed for " + routeID + ": " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error parsing route data for " + routeID + ": " + e.getMessage());
+        }
+        return null;
     }
 }
